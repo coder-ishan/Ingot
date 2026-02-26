@@ -20,6 +20,7 @@ _DEFAULT_USER_AGENT = (
 
 @dataclass
 class HttpClientConfig:
+    """Configuration for the shared async HTTP client."""
     max_keepalive_connections: int = 5
     max_connections: int = 10
     timeout_seconds: float = 30.0

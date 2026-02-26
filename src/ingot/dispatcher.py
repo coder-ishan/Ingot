@@ -13,6 +13,7 @@ from typing import Any, Callable
 
 @dataclass
 class TaskResult:
+    """Result container for a single dispatched async task."""
     task_name: str
     success: bool
     result: Any = None

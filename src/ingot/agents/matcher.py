@@ -58,6 +58,7 @@ class MatcherAgent:
         steps: list[str] | None = None,
         **kwargs,
     ) -> AgentRunResult:
+        """Execute the full pipeline or a specified subset of steps."""
         targets = steps if steps is not None else self.STEPS
         completed: list[StepResult] = []
         for step in targets:
@@ -73,6 +74,7 @@ class MatcherAgent:
         )
 
     async def run_step(self, step: str, deps: AgentDeps, **kwargs) -> StepResult:
+        """Dispatch a single named step to its implementation method."""
         match step:
             case "load_profile":
                 return await self._load_profile(deps, **kwargs)

@@ -1,0 +1,15 @@
+[MESSAGES CONTROL]
+disable =
+    # Intentional patterns in framework callbacks and stubs
+    unused-argument,
+    unnecessary-ellipsis,
+    unnecessary-pass,
+    # Re-exports and future imports
+    unused-import,
+    wrong-import-position,
+
+[FORMAT]
+max-line-length = 120
+
+[DESIGN]
+max-args = 10

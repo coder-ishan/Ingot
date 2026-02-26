@@ -65,6 +65,8 @@ class ContactType(str, enum.Enum):
 
 
 class LeadStatus(str, enum.Enum):
+    """Lifecycle status of a Lead through the pipeline."""
+
     discovered = "discovered"
     researching = "researching"
     matched = "matched"
@@ -74,6 +76,8 @@ class LeadStatus(str, enum.Enum):
 
 
 class EmailStatus(str, enum.Enum):
+    """Lifecycle status of a drafted outreach Email."""
+
     drafted = "drafted"
     approved = "approved"
     sent = "sent"
@@ -82,12 +86,16 @@ class EmailStatus(str, enum.Enum):
 
 
 class FollowUpStatus(str, enum.Enum):
+    """Scheduling status of a follow-up message."""
+
     queued = "queued"
     sent = "sent"
     skipped = "skipped"
 
 
 class CampaignStatus(str, enum.Enum):
+    """Operational status of an outreach Campaign."""
+
     active = "active"
     paused = "paused"
     completed = "completed"

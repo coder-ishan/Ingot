@@ -1,3 +1,4 @@
+"""Database package: engine, models, and repositories."""
 from ingot.db.engine import AsyncSessionLocal, engine, get_session, init_db
 from ingot.db.models import ContactType, LeadContact
 

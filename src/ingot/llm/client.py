@@ -31,6 +31,8 @@ logger = logging.getLogger("ingot.llm")
 
 
 class LLMClient:
+    """Unified LLM client routing to any LiteLLM-supported backend with retry logic."""
+
     def __init__(self, model: str, max_retries: int = 3):
         self.model = model
         self.max_retries = max_retries

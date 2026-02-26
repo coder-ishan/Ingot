@@ -8,11 +8,15 @@ from pydantic import BaseModel
 
 
 class LLMMessage(BaseModel):
+    """A single message in an LLM conversation (role + content)."""
+
     role: str   # "system" | "user" | "assistant"
     content: str
 
 
 class LLMRequest(BaseModel):
+    """Typed envelope for an LLM completion request (internal use)."""
+
     model: str
     messages: list[LLMMessage]
     tools: list[dict] | None = None

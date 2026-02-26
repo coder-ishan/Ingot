@@ -62,6 +62,7 @@ class ResearchAgent:
         steps: list[str] | None = None,
         **kwargs,
     ) -> AgentRunResult:
+        """Execute the full pipeline or a specified subset of steps."""
         targets = steps if steps is not None else self.STEPS
         completed: list[StepResult] = []
         for step in targets:
@@ -77,6 +78,7 @@ class ResearchAgent:
         )
 
     async def run_step(self, step: str, deps: AgentDeps, **kwargs) -> StepResult:
+        """Dispatch a single named step to its implementation method."""
         match step:
             case "fetch_company":
                 return await self._fetch_company(deps, **kwargs)
