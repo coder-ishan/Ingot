@@ -18,8 +18,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from ingot.agents.exceptions import ConfigError  # noqa: F401 — re-exported for callers
-
 # Location of the machine-specific random key file
 KEY_FILE: Path = Path.home() / ".ingot" / ".key"
 
@@ -104,6 +102,7 @@ def decrypt_secret(ciphertext: str) -> str:
     Raises:
         ConfigError: If decryption fails (wrong key, corrupted data, etc.).
     """
+    from ingot.agents.exceptions import ConfigError  # lazy — breaks config↔agents↔db cycle
     fernet = get_fernet()
     try:
         plaintext_bytes = fernet.decrypt(ciphertext.encode("utf-8"))
