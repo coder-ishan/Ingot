@@ -60,6 +60,7 @@ def extract_pdf_text(path: str | Path) -> str:
 
     doc = pymupdf.open(str(path))
     full_text: list[str] = []
+    link_uris: list[str] = []
     for page in doc:
         if column_boxes is not None:
             cols = column_boxes(page, footer_margin=50, no_image_text=True)
@@ -71,8 +72,16 @@ def extract_pdf_text(path: str | Path) -> str:
                 full_text.append(col_text.strip())
         else:
             full_text.append(page.get_text(sort=True).strip())
+        # Hyperlinks are stored as annotations, not text — collect them separately
+        for link in page.get_links():
+            uri = link.get("uri", "")
+            if uri and uri not in link_uris:
+                link_uris.append(uri)
     doc.close()
-    return "\n\n".join(t for t in full_text if t)
+    text = "\n\n".join(t for t in full_text if t)
+    if link_uris:
+        text += "\n\nLINKS:\n" + "\n".join(link_uris)
+    return text
 
 
 # ---------------------------------------------------------------------------
