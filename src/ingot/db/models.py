@@ -55,10 +55,10 @@ class UserProfile(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     headline: str = ""
-    skills: list[str] = Field(default_factory=list, sa_column=Column(JSON))
-    experience: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
-    education: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
-    projects: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
+    skills: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    experience: list[dict] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    education: list[dict] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    projects: list[dict] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
     github_url: str = ""
     linkedin_url: str = ""
     resume_raw_text: str = ""
@@ -84,12 +84,12 @@ class IntelBrief(SQLModel, table=True):
     """DB-03 — Research brief created by the Research agent for a lead."""
     id: Optional[int] = Field(default=None, primary_key=True)
     company_name: str
-    company_signals: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    company_signals: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
     person_name: str = ""
     person_role: str = ""
     company_website: str = ""
     person_background: str = ""
-    talking_points: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    talking_points: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
     company_product_description: str = ""
     lead_id: Optional[int] = Field(default=None, foreign_key="lead.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)

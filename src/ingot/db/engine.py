@@ -9,10 +9,12 @@ from sqlmodel import SQLModel
 
 def _get_database_url(base_dir: Path | None = None) -> str:
     if base_dir:
-        return f"sqlite+aiosqlite:///{base_dir}/outreach.db"
-    from ingot.config.manager import ConfigManager
-    cm = ConfigManager()
-    return f"sqlite+aiosqlite:///{cm.get_db_path()}"
+        db_path = (base_dir / "outreach.db").as_posix()
+    else:
+        from ingot.config.manager import ConfigManager
+        cm = ConfigManager()
+        db_path = Path(cm.get_db_path()).as_posix()
+    return f"sqlite+aiosqlite:///{db_path}"
 
 
 def create_engine(database_url: str):

@@ -1,5 +1,11 @@
 import asyncio
+import sys
 from logging.config import fileConfig
+from pathlib import Path
+
+# Ensure the package is importable without requiring an editable install.
+# `alembic` is typically run from the project root; src/ may not be on sys.path.
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
