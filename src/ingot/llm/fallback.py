@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import typing
 from typing import Type, TypeVar
 
 from pydantic import BaseModel
@@ -32,7 +33,12 @@ def xml_extract(content: str, schema: Type[T]) -> T:
         if match:
             raw_value = match.group(1).strip()
             annotation = field_info.annotation
-            origin = getattr(annotation, "__origin__", None)
+            # Unwrap Optional / Union (e.g. list[str] | None → list[str])
+            origin = typing.get_origin(annotation)
+            if origin is typing.Union:
+                args = [a for a in typing.get_args(annotation) if a is not type(None)]
+                annotation = args[0] if args else annotation
+                origin = typing.get_origin(annotation)
             if origin is list:
                 data[field_name] = [
                     line.strip() for line in raw_value.splitlines() if line.strip()

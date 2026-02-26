@@ -1,4 +1,7 @@
 """Pydantic models for LLM request/response envelopes (internal use)."""
+# NOTE: These models are not yet wired into LLMClient (which accepts list[dict] for
+# compatibility with litellm's interface). They serve as planned typed contracts for
+# a future refactor — keep them in sync with the client's actual behaviour.
 from __future__ import annotations
 
 from pydantic import BaseModel

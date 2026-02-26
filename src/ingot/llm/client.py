@@ -84,6 +84,7 @@ class LLMClient:
             response = await acompletion(**kwargs)
             raw = response.choices[0].message
             finish_reason = response.choices[0].finish_reason or ""
+            logger.debug("LLM finish_reason=%s", finish_reason)
 
             # Path 1: Native tool call
             if raw.tool_calls:
