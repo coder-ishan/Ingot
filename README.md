@@ -36,6 +36,41 @@ INGOT orchestrates seven specialised agents in a pipeline:
 
 ---
 
+## Agent architecture
+
+### Data flow: dependency injection over tool calls
+
+Agents receive all data they need through a typed `Deps` dataclass injected before the run — they do not call tools to fetch data mid-generation.
+
+```
+Orchestrator
+  │
+  ├─ loads IntelBriefFull, MatchResult, UserProfile from DB
+  ├─ constructs WriterDeps(intel_brief=..., match_result=..., user_profile=...)
+  └─ calls run_writer(deps, model=config.agents["writer"].model)
+         │
+         └─ writer_agent.run(..., deps=deps)
+               system_prompt injection reads deps directly — no tool calls
+```
+
+This means an agent like Writer never calls `load_intel_brief(lead_id)` during generation. The Orchestrator loads it once and passes it in. Benefits:
+
+- **No wasted round-trips** — tool calls require an extra LLM inference step for data the Orchestrator already has
+- **Deterministic** — all context is present from the first token; the LLM cannot skip a fetch or hallucinate a wrong ID
+- **Tool calls reserved for dynamic lookups** — if an agent genuinely needs to search the web or query an unknown row, `@agent.tool` is the right pattern; for pre-loaded pipeline data it is not
+
+### Agent factories
+
+Agents are not module-level singletons. Each agent is constructed by a factory function that accepts a model string:
+
+```python
+agent = create_writer_agent(config.agents["writer"].model)
+```
+
+The Orchestrator reads the model from `~/.ingot/config.json` at runtime and passes it to the factory. This means you can switch any agent to a different LLM backend (Ollama, GPT-4o, Claude Haiku) without touching agent code — just update `config.json` or re-run `ingot setup`.
+
+---
+
 ## Prerequisites
 
 | Requirement | Notes |
