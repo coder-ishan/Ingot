@@ -13,7 +13,7 @@ from ingot.agents import (  # noqa: F401
     scout,
     writer,
 )
-from ingot.agents.base import AgentBase, AgentDeps
+from ingot.agents.base import AgentBase, AgentDeps, AgentRunResult, StepResult
 from ingot.agents.exceptions import (
     AgentError,
     ConfigError,
@@ -26,9 +26,11 @@ from ingot.agents.exceptions import (
 from ingot.agents.registry import AGENT_REGISTRY, get_agent, list_agents
 
 __all__ = [
-    # deps / protocol
+    # deps / protocol / result types
     "AgentDeps",
     "AgentBase",
+    "StepResult",
+    "AgentRunResult",
     # registry
     "AGENT_REGISTRY",
     "get_agent",
