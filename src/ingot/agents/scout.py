@@ -58,10 +58,10 @@ async def _is_duplicate(session: AsyncSession, person_email: str) -> bool:
     """
     if not person_email or person_email.strip() == "":
         return False  # No email = can't dedup; allow through
-    result = await session.exec(
+    result = await session.execute(
         select(Lead).where(Lead.person_email.ilike(person_email.strip()))
     )
-    return result.first() is not None
+    return result.scalars().first() is not None
 
 
 def _company_to_lead_dict(company: dict, score: float) -> dict:
