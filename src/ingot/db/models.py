@@ -17,6 +17,53 @@ from sqlmodel import Field, SQLModel
 # Enum types (stored as str in SQLite — no database-level enum)
 # ---------------------------------------------------------------------------
 
+class ContactType(str, enum.Enum):
+    """Supported contact channel types for a Lead.
+
+    ``email`` is the only channel used for outreach in v1.
+    All others are stored for research context and future outreach channels.
+
+    Professional:
+        email, linkedin, phone, calendly
+
+    Developer presence:
+        github, stackoverflow
+
+    Social / content:
+        twitter, medium, substack, youtube
+
+    Startup ecosystem:
+        angellist, crunchbase, producthunt
+
+    Web:
+        website, portfolio
+    """
+    # Professional
+    email = "email"
+    linkedin = "linkedin"
+    phone = "phone"
+    calendly = "calendly"
+
+    # Developer presence
+    github = "github"
+    stackoverflow = "stackoverflow"
+
+    # Social / content
+    twitter = "twitter"
+    medium = "medium"
+    substack = "substack"
+    youtube = "youtube"
+
+    # Startup ecosystem
+    angellist = "angellist"
+    crunchbase = "crunchbase"
+    producthunt = "producthunt"
+
+    # Web
+    website = "website"
+    portfolio = "portfolio"
+
+
 class LeadStatus(str, enum.Enum):
     discovered = "discovered"
     researching = "researching"
@@ -77,6 +124,24 @@ class Lead(SQLModel, table=True):
     source_venue: str = ""
     status: LeadStatus = LeadStatus.discovered
     initial_score: float = 0.0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class LeadContact(SQLModel, table=True):
+    """DB-02b — Typed contact details for a Lead.
+
+    One row per contact channel. Multiple rows may exist for the same lead
+    and the same contact_type (e.g., two email addresses found by Research).
+
+    ``is_primary`` marks the preferred contact for outreach within a type.
+    Only ``email`` contacts are used for sending in v1; all types are stored
+    for research context and future channel support.
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    lead_id: int = Field(foreign_key="lead.id", index=True)
+    contact_type: ContactType
+    value: str
+    is_primary: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
