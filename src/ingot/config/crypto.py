@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import base64
 import os
-import stat
 from pathlib import Path
 
 from cryptography.fernet import Fernet
@@ -53,10 +52,13 @@ def _load_or_create_machine_key() -> bytes:
     if KEY_FILE.exists():
         return KEY_FILE.read_bytes()
 
-    # Generate and persist a fresh machine key
+    # Generate and persist a fresh machine key with atomic 0o600 permissions.
+    # O_EXCL + mode=0o600 ensures the file is created with restricted permissions
+    # from the start, eliminating the TOCTOU window that write_bytes + chmod has.
     key_bytes = os.urandom(32)
-    KEY_FILE.write_bytes(key_bytes)
-    KEY_FILE.chmod(0o600)
+    fd = os.open(str(KEY_FILE), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "wb") as f:
+        f.write(key_bytes)
     return key_bytes
 
 

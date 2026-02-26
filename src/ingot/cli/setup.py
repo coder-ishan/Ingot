@@ -22,6 +22,7 @@ from rich.table import Table
 
 from ingot.config.manager import ConfigManager
 from ingot.config.schema import AgentConfig, AppConfig
+from ingot.logging_config import configure_logging
 
 # ----- constants ----
 
@@ -152,6 +153,7 @@ def _run_setup(
         _run_interactive(cfg, preset=preset)
 
     cm.ensure_dirs()
+    configure_logging(cm.base_dir, verbosity=verbose)
     cm.save(cfg)
     _out.print("\n[green]Setup complete![/green]")
     _print_summary(cfg, cm)
@@ -267,20 +269,26 @@ def _run_interactive(cfg: AppConfig, preset: str | None) -> None:
     )
 
     if needs_anthropic and not cfg.anthropic_api_key:
-        key = questionary.password("Anthropic API Key (sk-ant-...):").ask()
-        if key and key.startswith("sk-ant-"):
+        while True:
+            key = questionary.password("Anthropic API Key (sk-ant-...):").ask()
+            if not key:
+                _err.print("[red]Anthropic API key is required. Press Ctrl+C to abort.[/red]")
+                continue
+            if not key.startswith("sk-ant-"):
+                _err.print("[yellow]Warning: key does not start with 'sk-ant-'[/yellow]")
             cfg.anthropic_api_key = key
-        elif key:
-            _err.print("[yellow]Warning: Anthropic key does not start with 'sk-ant-'[/yellow]")
-            cfg.anthropic_api_key = key
+            break
 
     if needs_openai and not cfg.openai_api_key:
-        key = questionary.password("OpenAI API Key (sk-...):").ask()
-        if key and key.startswith("sk-"):
+        while True:
+            key = questionary.password("OpenAI API Key (sk-...):").ask()
+            if not key:
+                _err.print("[red]OpenAI API key is required. Press Ctrl+C to abort.[/red]")
+                continue
+            if not key.startswith("sk-"):
+                _err.print("[yellow]Warning: key does not start with 'sk-'[/yellow]")
             cfg.openai_api_key = key
-        elif key:
-            _err.print("[yellow]Warning: OpenAI key does not start with 'sk-'[/yellow]")
-            cfg.openai_api_key = key
+            break
 
     if needs_ollama:
         _out.print(
