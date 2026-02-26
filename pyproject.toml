@@ -40,7 +40,7 @@ ingot = "ingot.cli:app"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-addopts = "--cov=ingot --cov-report=term-missing --cov-fail-under=70"
+addopts = "--cov=ingot --cov-report=term-missing --cov-fail-under=80"
 testpaths = ["tests"]
 
 [tool.coverage.run]

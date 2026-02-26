@@ -39,6 +39,6 @@ class BaseRepository(Generic[T]):
         obj = await self.get(obj_id)
         if obj is None:
             return False
-        self.session.delete(obj)
+        await self.session.delete(obj)
         await self.session.commit()
         return True
