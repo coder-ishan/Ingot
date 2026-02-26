@@ -23,9 +23,9 @@ class BaseRepository(Generic[T]):
         await self.session.refresh(obj)
         return obj
 
-    async def get(self, id: int) -> T | None:
+    async def get(self, obj_id: int) -> T | None:
         """Fetch a single record by primary key, or None if not found."""
-        return await self.session.get(self.model, id)
+        return await self.session.get(self.model, obj_id)
 
     async def list(self, limit: int = 100, offset: int = 0) -> list[T]:
         """Return a paginated list of all records for this model."""
@@ -34,9 +34,9 @@ class BaseRepository(Generic[T]):
         )
         return list(result.scalars().all())
 
-    async def delete(self, id: int) -> bool:
+    async def delete(self, obj_id: int) -> bool:
         """Delete a record by primary key. Returns True if deleted, False if not found."""
-        obj = await self.get(id)
+        obj = await self.get(obj_id)
         if obj is None:
             return False
         self.session.delete(obj)

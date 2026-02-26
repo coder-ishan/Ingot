@@ -11,8 +11,10 @@ Usage:
 """
 from __future__ import annotations
 
+import logging
 import os
 import sys
+import traceback
 from pathlib import Path
 
 import questionary
@@ -120,17 +122,14 @@ def setup_app(
     """Run the INGOT setup wizard to configure credentials and LLM backends."""
     try:
         _run_setup(non_interactive=non_interactive, preset=preset, verbose=verbose)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as exc:
         _err.print("\n[yellow]Setup cancelled.[/yellow]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from exc
     except typer.Exit:
         raise
     except Exception as exc:
         log_path = Path.home() / ".ingot" / "logs"
         _err.print(f"[red][Setup] Something went wrong. Full error logged to {log_path}[/red]")
-        # Log the full traceback
-        import traceback
-        import logging
         logging.getLogger("ingot.cli.setup").error(
             "Setup wizard failed", exc_info=True
         )
@@ -230,7 +229,7 @@ def _run_interactive(cfg: AppConfig, preset: str | None) -> None:
         if address:
             cfg.mailing_address = address.strip()
     else:
-        _out.print(f"Mailing address: [dim][already configured][/dim]")
+        _out.print("Mailing address: [dim][already configured][/dim]")
 
     # Step 4: Determine LLM preset or ask
     effective_preset = preset

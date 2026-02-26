@@ -6,7 +6,20 @@ disable =
     unnecessary-pass,
     # Re-exports and future imports
     unused-import,
-    wrong-import-position,
+    # Enum members are intentionally lowercase for str enums (e.g. "email" = "email")
+    # Module-level private vars (_client, _config_snapshot) are not constants
+    invalid-name,
+    # Singleton pattern using module-level global is intentional in http_client
+    global-statement,
+    # Broad exception catches are guarded and intentional in dispatcher/llm client
+    broad-exception-caught,
+    # LLMClient._call_once is private; public surface is intentionally minimal
+    too-few-public-methods,
+    # Duplicate structlog processor chains across modules — acceptable for now
+    duplicate-code,
+    # Complex CLI setup wizard function — refactor deferred
+    too-many-branches,
+    too-many-statements,
 
 [FORMAT]
 max-line-length = 120

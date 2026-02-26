@@ -32,7 +32,7 @@ def configure_logging(base_dir: Path, verbosity: int = 0) -> None:
 
     # Root logger setup
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(log_level)
     root_logger.handlers.clear()
 
     # Stderr handler — WARNING+ only, human-readable
