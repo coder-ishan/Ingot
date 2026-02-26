@@ -37,6 +37,7 @@ from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ingot.agents.registry import register_agent
 from ingot.db.models import Email, EmailStatus, FollowUp, FollowUpStatus, Lead, LeadStatus
 from ingot.models.schemas import EmailDraft, IntelBriefFull, MatchResult, MCQAnswers, UserProfile
 
@@ -414,3 +415,6 @@ async def run_writer(
 
     await deps.session.commit()
     return draft
+
+
+register_agent("writer", run_writer)
