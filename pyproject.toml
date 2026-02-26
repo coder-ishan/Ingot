@@ -36,7 +36,7 @@ dev = [
 ]
 
 [project.scripts]
-job-hunter = "ingot.cli:app"
+ingot = "ingot.cli:app"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

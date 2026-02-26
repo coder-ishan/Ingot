@@ -1,7 +1,7 @@
 """Fernet encryption for INGOT config secrets.
 
 Uses PBKDF2HMAC to derive a Fernet key from a machine-generated random key
-stored at ~/.outreach-agent/.key. The machine key has full entropy so
+stored at ~/.ingot/.key. The machine key has full entropy so
 600_000 PBKDF2 iterations are sufficient (not 1,200,000 which is for
 low-entropy passwords).
 
@@ -19,7 +19,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Location of the machine-specific random key file
-KEY_FILE: Path = Path.home() / ".outreach-agent" / ".key"
+KEY_FILE: Path = Path.home() / ".ingot" / ".key"
 
 # Static salt — unique per application, not per user
 SALT: bytes = b"ingot-v1-static-salt"
@@ -40,7 +40,7 @@ def _load_or_create_machine_key() -> bytes:
     """Load the machine key from KEY_FILE, creating it if it does not exist.
 
     On first run:
-      - Creates the parent directory (~/.outreach-agent/) if needed.
+      - Creates the parent directory (~/.ingot/) if needed.
       - Generates 32 cryptographically random bytes via os.urandom(32).
       - Writes the key file with chmod 0o600 (owner read/write only).
 

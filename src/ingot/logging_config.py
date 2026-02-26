@@ -14,7 +14,7 @@ def configure_logging(base_dir: Path, verbosity: int = 0) -> None:
     """Configure structlog with stderr and rotating file handlers.
 
     Args:
-        base_dir: Base directory for log files (e.g., ~/.outreach-agent/).
+        base_dir: Base directory for log files (e.g., ~/.ingot/).
         verbosity: 0=WARNING, 1=INFO (-v), 2=DEBUG (-vv).
     """
     log_level = {

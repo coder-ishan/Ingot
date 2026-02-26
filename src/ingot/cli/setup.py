@@ -5,9 +5,9 @@ Supports both interactive (questionary prompts) and non-interactive
 skipped — only missing or blank fields are prompted.
 
 Usage:
-    job-hunter setup                                    # interactive
-    job-hunter setup --preset fully_free                # interactive, apply preset
-    job-hunter setup --non-interactive --preset best_quality  # CI/env-var mode
+    ingot setup                                    # interactive
+    ingot setup --preset fully_free                # interactive, apply preset
+    ingot setup --non-interactive --preset best_quality  # CI/env-var mode
 """
 from __future__ import annotations
 
@@ -126,7 +126,7 @@ def setup_app(
     except typer.Exit:
         raise
     except Exception as exc:
-        log_path = Path.home() / ".outreach-agent" / "logs"
+        log_path = Path.home() / ".ingot" / "logs"
         _err.print(f"[red][Setup] Something went wrong. Full error logged to {log_path}[/red]")
         # Log the full traceback
         import traceback
