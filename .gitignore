@@ -1,0 +1,10 @@
+# Planning artifacts (local only)
+.planning/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Claude
+.claude/
