@@ -13,7 +13,7 @@ Provides:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pydantic_ai import Agent, RunContext
@@ -217,7 +217,7 @@ def validate_profile(profile: UserProfile) -> tuple[bool, str]:
             or (isinstance(f, str) and f.strip() != "")
         )
     )
-    threshold = max(1, int(len(fields) * 0.10))  # 10 % of 9 == 0 → at least 1
+    threshold = max(1, int(len(fields) * 0.10))  # 10% of 9 == 0 → at least 1
     if populated < threshold:
         return (
             False,
@@ -270,7 +270,7 @@ async def extract_profile(
         raise ResumeParseError(f"Extraction rejected: {reason}")
 
     # Map Pydantic schema -> SQLModel table row
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     db_profile = db_models.UserProfile(
         name=profile_schema.name,
         headline=profile_schema.headline or "",

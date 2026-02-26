@@ -43,7 +43,7 @@ class IntelBriefFull(BaseModel):
     person_role: str = ""
     company_website: str = ""
     person_background: str = ""
-    talking_points: list[str] = Field(default_factory=list, min_length=1, max_length=3)
+    talking_points: list[str] = Field(default_factory=list, max_length=3)
     company_product_description: str = ""
 
     @field_validator("talking_points")
