@@ -1,7 +1,7 @@
 """Fernet encryption for INGOT config secrets.
 
 Uses PBKDF2HMAC to derive a Fernet key from a machine-generated random key
-stored at ~/.outreach-agent/.key. The machine key has full entropy so
+stored at ~/.ingot/.key. The machine key has full entropy so
 600_000 PBKDF2 iterations are sufficient (not 1,200,000 which is for
 low-entropy passwords).
 
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import base64
 import os
-import stat
 from pathlib import Path
 
 from cryptography.fernet import Fernet
@@ -20,7 +19,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Location of the machine-specific random key file
-KEY_FILE: Path = Path.home() / ".outreach-agent" / ".key"
+KEY_FILE: Path = Path.home() / ".ingot" / ".key"
 
 # Static salt — unique per application, not per user
 SALT: bytes = b"ingot-v1-static-salt"
@@ -41,7 +40,7 @@ def _load_or_create_machine_key() -> bytes:
     """Load the machine key from KEY_FILE, creating it if it does not exist.
 
     On first run:
-      - Creates the parent directory (~/.outreach-agent/) if needed.
+      - Creates the parent directory (~/.ingot/) if needed.
       - Generates 32 cryptographically random bytes via os.urandom(32).
       - Writes the key file with chmod 0o600 (owner read/write only).
 
@@ -53,10 +52,13 @@ def _load_or_create_machine_key() -> bytes:
     if KEY_FILE.exists():
         return KEY_FILE.read_bytes()
 
-    # Generate and persist a fresh machine key
+    # Generate and persist a fresh machine key with atomic 0o600 permissions.
+    # O_EXCL + mode=0o600 ensures the file is created with restricted permissions
+    # from the start, eliminating the TOCTOU window that write_bytes + chmod has.
     key_bytes = os.urandom(32)
-    KEY_FILE.write_bytes(key_bytes)
-    KEY_FILE.chmod(0o600)
+    fd = os.open(str(KEY_FILE), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "wb") as f:
+        f.write(key_bytes)
     return key_bytes
 
 

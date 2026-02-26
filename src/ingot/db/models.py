@@ -22,13 +22,46 @@ class ContactType(str, enum.Enum):
 
     ``email`` is the only channel used for outreach in v1.
     All others are stored for research context and future outreach channels.
+
+    Professional:
+        email, linkedin, phone, calendly
+
+    Developer presence:
+        github, stackoverflow
+
+    Social / content:
+        twitter, medium, substack, youtube
+
+    Startup ecosystem:
+        angellist, crunchbase, producthunt
+
+    Web:
+        website, portfolio
     """
+    # Professional
     email = "email"
     linkedin = "linkedin"
-    github = "github"
-    twitter = "twitter"
-    website = "website"
     phone = "phone"
+    calendly = "calendly"
+
+    # Developer presence
+    github = "github"
+    stackoverflow = "stackoverflow"
+
+    # Social / content
+    twitter = "twitter"
+    medium = "medium"
+    substack = "substack"
+    youtube = "youtube"
+
+    # Startup ecosystem
+    angellist = "angellist"
+    crunchbase = "crunchbase"
+    producthunt = "producthunt"
+
+    # Web
+    website = "website"
+    portfolio = "portfolio"
 
 
 class LeadStatus(str, enum.Enum):

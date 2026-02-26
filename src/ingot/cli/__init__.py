@@ -1,10 +1,10 @@
-"""CLI entry point for INGOT (job-hunter command)."""
+"""CLI entry point for INGOT."""
 import typer
 
 # Use invoke_without_command=True so that the app always shows the Commands
 # section even with a single sub-command registered.
 app = typer.Typer(
-    name="job-hunter",
+    name="ingot",
     help="INGOT — INtelligent Generation & Outreach Tool",
     no_args_is_help=True,
 )

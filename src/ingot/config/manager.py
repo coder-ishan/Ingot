@@ -35,14 +35,14 @@ class ConfigManager:
 
     Usage::
 
-        cm = ConfigManager()          # uses ~/.outreach-agent/
+        cm = ConfigManager()          # uses ~/.ingot/
         cfg = cm.load()               # returns AppConfig (decrypts secrets)
         cfg.smtp.password = "secret"
         cm.save(cfg)                  # encrypts secrets, writes atomically
     """
 
     def __init__(self, base_dir: Path | None = None) -> None:
-        self.base_dir: Path = base_dir or Path.home() / ".outreach-agent"
+        self.base_dir: Path = base_dir or Path.home() / ".ingot"
         self.config_path: Path = self.base_dir / "config.json"
 
     # ------------------------------------------------------------------
@@ -50,7 +50,7 @@ class ConfigManager:
     # ------------------------------------------------------------------
 
     def ensure_dirs(self) -> None:
-        """Create ~/.outreach-agent/ and required subdirectories.
+        """Create ~/.ingot/ and required subdirectories.
 
         Called on first run before saving config. Safe to call repeatedly
         (uses exist_ok=True).

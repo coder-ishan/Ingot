@@ -5,7 +5,13 @@ Revises: 149adcd94073
 Create Date: 2026-02-26
 
 Adds DB-02b: LeadContact — typed contact details for a Lead.
-One row per contact channel (email, linkedin, github, twitter, website, phone).
+contact_type is stored as String (SQLite has no native enum); valid values
+are enforced by the ContactType enum in models.py:
+  professional: email, linkedin, phone, calendly
+  developer:    github, stackoverflow
+  social:       twitter, medium, substack, youtube
+  startup:      angellist, crunchbase, producthunt
+  web:          website, portfolio
 """
 from alembic import op
 import sqlalchemy as sa

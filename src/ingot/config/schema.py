@@ -54,7 +54,7 @@ def _default_agents() -> dict[str, AgentConfig]:
 class AppConfig(BaseModel):
     """Root configuration model for INGOT.
 
-    Serialized to ~/.outreach-agent/config.json. Secret fields (smtp.password,
+    Serialized to ~/.ingot/config.json. Secret fields (smtp.password,
     imap.password, and any api_key fields) are Fernet-encrypted before writing
     and decrypted after reading by ConfigManager.
     """
