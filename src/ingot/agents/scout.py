@@ -21,6 +21,7 @@ from sqlmodel import select
 from ingot.db.models import Lead, LeadStatus
 from ingot.venues.yc import fetch_yc_companies
 from ingot.scoring.scorer import ScoringWeights, score_lead, DEFAULT_WEIGHTS
+from ingot.agents.registry import register_agent
 
 
 @dataclass
@@ -151,3 +152,8 @@ async def scout_run(deps: ScoutDeps) -> list[Lead]:
         persisted_leads.append(lead)
 
     return persisted_leads
+
+
+# Register scout_run in the agent registry for Orchestrator discovery.
+# Phase 2 note: Scout is a plain async function (no LLM needed for structured JSON data).
+register_agent("scout", scout_run)

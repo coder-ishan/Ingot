@@ -1,11 +1,9 @@
-"""Tests for agent pipeline contracts: run(), run_step(), error propagation.
+"""Tests for agent pipeline contracts.
 
-These tests verify the behavioral contracts the Orchestrator relies on:
-- run() executes steps in declared order
-- run() stops at the first failed step
-- run() respects a subset of steps when passed explicitly
-- run_step() dispatches to the correct step implementation
-- run_step() raises ValueError for unknown step names
+Phase 1: run(), run_step(), error propagation for PydanticAI-based agents.
+Phase 2: New function-based agent contracts (scout_run, run_writer, etc.).
+
+These tests verify the behavioral contracts the Orchestrator relies on.
 """
 from __future__ import annotations
 
@@ -26,41 +24,43 @@ def make_deps() -> AgentDeps:
     )
 
 
-# ─── ScoutAgent ───────────────────────────────────────────────────────────────
+# ─── Scout (Phase 2 function-based) ──────────────────────────────────────────
 
 class TestScoutPipeline:
-    @pytest.fixture
-    def scout(self):
-        from ingot.agents.scout import ScoutAgent
-        return ScoutAgent()
+    """Tests for Phase 2 Scout: plain async function, typed ScoutDeps, no LLM."""
 
-    async def test_run_executes_all_steps(self, scout):
-        result = await scout.run(make_deps())
-        assert result.success
-        assert [s.step for s in result.steps] == ["discover", "deduplicate", "score"]
+    def test_scout_run_is_importable(self):
+        from ingot.agents.scout import scout_run, ScoutDeps
+        import asyncio
+        assert callable(scout_run)
+        assert ScoutDeps is not None
 
-    async def test_run_stops_on_first_failure(self, scout):
-        """If 'deduplicate' fails, 'score' must not run."""
-        fail = StepResult(step="deduplicate", success=False, error=RuntimeError("db error"))
-        with patch.object(scout, "_deduplicate", AsyncMock(return_value=fail)):
-            result = await scout.run(make_deps())
-        assert not result.success
-        step_names = [s.step for s in result.steps]
-        assert "score" not in step_names
+    def test_scout_deps_has_required_fields(self):
+        from ingot.agents.scout import ScoutDeps
+        import dataclasses
+        fields = {f.name for f in dataclasses.fields(ScoutDeps)}
+        assert "http_client" in fields
+        assert "session" in fields
+        assert "user_skills" in fields
+        assert "max_leads" in fields
+        assert "min_leads" in fields
 
-    async def test_run_partial_steps(self, scout):
-        result = await scout.run(make_deps(), steps=["discover"])
-        assert len(result.steps) == 1
-        assert result.steps[0].step == "discover"
+    def test_validate_company_record_accepts_complete_record(self):
+        from ingot.agents.scout import _validate_company_record
+        valid, reason = _validate_company_record({"name": "Acme", "website": "acme.com"})
+        assert valid
+        assert reason == ""
 
-    async def test_run_step_invalid_raises_value_error(self, scout):
-        with pytest.raises(ValueError, match="Scout has no step"):
-            await scout.run_step("nonexistent", make_deps())
+    def test_validate_company_record_rejects_empty_name_and_website(self):
+        from ingot.agents.scout import _validate_company_record
+        valid, reason = _validate_company_record({"name": "", "website": ""})
+        assert not valid
+        assert reason != ""
 
-    async def test_run_step_discover(self, scout):
-        result = await scout.run_step("discover", make_deps())
-        assert result.success
-        assert result.step == "discover"
+    def test_scout_registered_in_registry(self):
+        from ingot.agents.registry import AGENT_REGISTRY
+        import ingot.agents.scout  # noqa — trigger registration
+        assert "scout" in AGENT_REGISTRY
 
 
 # ─── AnalystAgent ─────────────────────────────────────────────────────────────
@@ -126,21 +126,19 @@ class TestResearchPipeline:
             await research.run_step("nonexistent", make_deps())
 
 
-# ─── WriterAgent ──────────────────────────────────────────────────────────────
+# ─── Writer (Phase 2 function-based) ─────────────────────────────────────────
 
 class TestWriterPipeline:
-    @pytest.fixture
-    def writer(self):
-        from ingot.agents.writer import WriterAgent
-        return WriterAgent()
+    """Tests for Phase 2 Writer: run_writer() async function with WriterDeps.
 
-    async def test_run_executes_all_steps(self, writer):
-        result = await writer.run(make_deps())
-        assert result.success
+    Writer is implemented in Phase 2 plan 02-07. These tests verify basic
+    importability; full behavioral tests are added in that plan.
+    """
 
-    async def test_run_step_invalid_raises_value_error(self, writer):
-        with pytest.raises(ValueError):
-            await writer.run_step("nonexistent", make_deps())
+    def test_run_writer_is_importable(self):
+        """Writer module should import without errors."""
+        import ingot.agents.writer  # noqa — verify importable
+        assert ingot.agents.writer is not None
 
 
 # ─── OutreachAgent ────────────────────────────────────────────────────────────
