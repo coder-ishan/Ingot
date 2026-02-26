@@ -18,6 +18,8 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from ingot.agents.exceptions import ConfigError  # noqa: F401 — re-exported for callers
+
 # Location of the machine-specific random key file
 KEY_FILE: Path = Path.home() / ".ingot" / ".key"
 
@@ -26,14 +28,6 @@ SALT: bytes = b"ingot-v1-static-salt"
 
 # PBKDF2 iteration count — machine key has full entropy, so 600k is sufficient
 _PBKDF2_ITERATIONS: int = 600_000
-
-
-class ConfigError(Exception):
-    """Raised when configuration or encryption operations fail.
-
-    Note: Plan 01-04 will create a full exception hierarchy; this is a
-    local stub used only within the config subsystem.
-    """
 
 
 def _load_or_create_machine_key() -> bytes:

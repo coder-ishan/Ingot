@@ -144,6 +144,8 @@ def _run_setup(
 ) -> None:
     """Internal setup logic separated from the Typer decorator."""
     cm = ConfigManager()
+    cm.ensure_dirs()
+    configure_logging(cm.base_dir, verbosity=verbose)
     cfg = cm.load()
 
     if non_interactive:
@@ -151,8 +153,6 @@ def _run_setup(
     else:
         _run_interactive(cfg, preset=preset)
 
-    cm.ensure_dirs()
-    configure_logging(cm.base_dir, verbosity=verbose)
     cm.save(cfg)
     _out.print("\n[green]Setup complete![/green]")
     _print_summary(cfg, cm)
@@ -162,8 +162,6 @@ def _run_setup(
 
 def _run_non_interactive(cfg: AppConfig, preset: str | None) -> None:
     """Populate config from environment variables."""
-    errors: list[str] = []
-
     gmail_username = os.environ.get("GMAIL_USERNAME", "")
     gmail_password = os.environ.get("GMAIL_APP_PASSWORD", "")
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -188,6 +186,23 @@ def _run_non_interactive(cfg: AppConfig, preset: str | None) -> None:
     for agent_name in _AGENT_NAMES:
         if agent_name not in cfg.agents:
             cfg.agents[agent_name] = AgentConfig()
+
+    # Validate required API keys based on configured models
+    errors: list[str] = []
+    needs_anthropic = any("anthropic" in a.model for a in cfg.agents.values())
+    needs_openai = any("openai" in a.model or "gpt" in a.model for a in cfg.agents.values())
+    if needs_anthropic and not cfg.anthropic_api_key:
+        errors.append(
+            "ANTHROPIC_API_KEY is required for the selected preset/models but was not set."
+        )
+    if needs_openai and not cfg.openai_api_key:
+        errors.append(
+            "OPENAI_API_KEY is required for the selected preset/models but was not set."
+        )
+    if gmail_username and not cfg.smtp.password:
+        errors.append(
+            "GMAIL_APP_PASSWORD must be set when GMAIL_USERNAME is provided."
+        )
 
     if errors:
         for error in errors:

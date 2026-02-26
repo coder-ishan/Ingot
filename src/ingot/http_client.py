@@ -59,7 +59,8 @@ def get_http_client(config: HttpClientConfig | None = None) -> httpx.AsyncClient
 
 async def close_http_client() -> None:
     """Close and reset the shared client. Call in test teardown or on shutdown."""
-    global _client
+    global _client, _config_snapshot
     if _client is not None and not _client.is_closed:
         await _client.aclose()
     _client = None
+    _config_snapshot = None

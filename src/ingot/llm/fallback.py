@@ -35,8 +35,9 @@ def xml_extract(content: str, schema: Type[T]) -> T:
             raw_value = match.group(1).strip()
             annotation = field_info.annotation
             # Unwrap Optional / Union (e.g. list[str] | None → list[str])
+            # Handles both typing.Union (Optional[X]) and PEP-604 X | None syntax
             origin = typing.get_origin(annotation)
-            if origin is typing.Union:
+            if origin is typing.Union or isinstance(annotation, types.UnionType):
                 args = [a for a in typing.get_args(annotation) if a is not types.NoneType]
                 annotation = args[0] if args else annotation
                 origin = typing.get_origin(annotation)

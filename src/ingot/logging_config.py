@@ -33,7 +33,9 @@ def configure_logging(base_dir: Path, verbosity: int = 0) -> None:
     # Root logger setup
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
-    root_logger.handlers.clear()
+    for handler in root_logger.handlers[:]:
+        handler.close()
+        root_logger.removeHandler(handler)
 
     # Stderr handler — WARNING+ only, human-readable
     stderr_handler = logging.StreamHandler(sys.stderr)

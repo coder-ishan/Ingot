@@ -27,3 +27,12 @@ async def test_custom_config_applied():
     client = get_http_client(config=cfg)
     assert client.timeout.read == 10.0
     await close_http_client()
+
+
+async def test_close_resets_config_snapshot():
+    """close_http_client() must clear _config_snapshot for clean test isolation."""
+    from ingot.http_client import _config_snapshot as snap_before
+    get_http_client(HttpClientConfig(timeout_seconds=99.0))
+    await close_http_client()
+    from ingot.http_client import _config_snapshot as snap_after
+    assert snap_after is None

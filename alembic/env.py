@@ -14,7 +14,7 @@ from sqlmodel import SQLModel
 
 # MUST import all models to register them in SQLModel.metadata before autogenerate
 from ingot.db.models import (  # noqa: F401
-    UserProfile, Lead, IntelBrief, Match, Email, FollowUp,
+    UserProfile, Lead, LeadContact, IntelBrief, Match, Email, FollowUp,
     Campaign, AgentLog, Venue, OutreachMetric, UnsubscribedEmail,
 )
 
