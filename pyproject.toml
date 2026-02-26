@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ingot"
+version = "0.1.0"
+description = "INGOT — INtelligent Generation & Outreach Tool"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic-ai>=0.0.14",
+    "litellm>=1.35",
+    "sqlmodel>=0.0.19",
+    "aiosqlite>=0.20",
+    "alembic>=1.14",
+    "cryptography>=44",
+    "tenacity>=9",
+    "pydantic>=2",
+    "typer>=0.15",
+    "rich>=14",
+    "questionary>=2",
+    "httpx>=0.28",
+    "platformdirs>=3",
+    "structlog>=25",
+    "aiosmtplib>=3",
+    "aioimaplib>=2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5",
+    "anyio>=4",
+    "httpx",
+]
+
+[project.scripts]
+job-hunter = "ingot.cli:app"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "--cov=ingot --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["ingot"]
+omit = ["tests/*"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ingot"]
