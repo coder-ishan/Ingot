@@ -10,7 +10,6 @@ DO NOT scrape ycombinator.com directly:
 - Their company directory uses Algolia + infinite scroll JS rendering
 - httpx GET returns <div id="__next"> with no company data (Pitfall 1 in 02-RESEARCH.md)
 """
-import asyncio
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -63,6 +62,6 @@ async def fetch_yc_companies(
         else:
             raise
 
-    assert isinstance(companies, list), f"Expected list, got {type(companies)}"
-    assert len(companies) > 100, f"Suspiciously few companies: {len(companies)}"
+    if not isinstance(companies, list):
+        raise ValueError(f"Expected list of companies from {url}, got {type(companies)}")
     return companies

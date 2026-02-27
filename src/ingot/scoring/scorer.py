@@ -35,7 +35,7 @@ class ScoringWeights:
 
     def __post_init__(self):
         total = self.stack_domain_match + self.company_stage + self.job_keyword_match + self.semantic_similarity
-        assert abs(total - 1.0) < 0.001, f"ScoringWeights must sum to 1.0, got {total}"
+        if abs(total - 1.0) >= 0.001: raise ValueError(f"ScoringWeights must sum to 1.0, got {total:.4f}")
 
 
 DEFAULT_WEIGHTS = ScoringWeights()
@@ -136,6 +136,7 @@ def _semantic_score(company: dict, resume_text: str) -> float:
     if not company_desc or not resume_text:
         return 0.0
     try:
+        # v2 TODO: accept a pre-fit vectorizer as param to avoid refitting per company call
         vectorizer = TfidfVectorizer(stop_words="english", max_features=500)
         tfidf_matrix = vectorizer.fit_transform([company_desc, resume_text])
         score = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
@@ -148,7 +149,7 @@ def score_lead(
     company: dict,
     user_skills: list[str],
     resume_text: str = "",
-    weights: ScoringWeights = DEFAULT_WEIGHTS,
+    weights: ScoringWeights | None = None,
 ) -> float:
     """
     Score a YC company against user skills. Returns float 0.0-1.0.
@@ -156,6 +157,7 @@ def score_lead(
     Weights are documented in ScoringWeights docstring.
     To tune: pass a custom ScoringWeights instance.
     """
+    weights = weights or DEFAULT_WEIGHTS
     stack = _stack_domain_score(company, user_skills)
     stage = _stage_score(company)
     keyword = _job_keyword_score(company, user_skills)

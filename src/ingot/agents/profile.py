@@ -13,14 +13,25 @@ Provides:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
+import pymupdf  # PyMuPDF >=1.24
+from docx import Document  # python-docx >=1.1; iter_inner_content() tested against >=1.1
 from pydantic_ai import Agent, RunContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import ingot.db.models as db_models
 from ingot.models.schemas import UserProfile
+
+# column_boxes location varies by PyMuPDF version — resolve once at import time.
+try:
+    from pymupdf import column_boxes as _column_boxes
+except ImportError:
+    try:
+        from pymupdf.utils import column_boxes as _column_boxes  # type: ignore[no-redef]
+    except ImportError:
+        _column_boxes = None  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------
@@ -41,28 +52,16 @@ def extract_pdf_text(path: str | Path) -> str:
     """Extract text from PDF with multi-column layout support.
 
     CRITICAL: Do NOT use page.get_text(sort=True) alone — it interleaves
-    columns on two-column resumes.  Uses column_boxes() to detect column
+    columns on two-column resumes.  Uses _column_boxes() to detect column
     Rects, then extracts per-column in reading order.  Falls back to
-    single-column get_text() if column_boxes is unavailable or returns
+    single-column get_text() if _column_boxes is unavailable or returns
     nothing.
     """
-    import pymupdf  # PyMuPDF >=1.24
-
-    # column_boxes may be in pymupdf.utils or pymupdf directly depending
-    # on the installed version.  Try both; fall back to None (single-column).
-    try:
-        from pymupdf import column_boxes
-    except ImportError:
-        try:
-            from pymupdf.utils import column_boxes  # type: ignore[no-redef]
-        except ImportError:
-            column_boxes = None  # type: ignore[assignment]
-
     doc = pymupdf.open(str(path))
     full_text: list[str] = []
     for page in doc:
-        if column_boxes is not None:
-            cols = column_boxes(page, footer_margin=50, no_image_text=True)
+        if _column_boxes is not None:
+            cols = _column_boxes(page, footer_margin=50, no_image_text=True)
         else:
             cols = []
         if cols:
@@ -131,14 +130,14 @@ def parse_resume(path: str | Path | None, fallback_text: str | None = None) -> s
                 return extract_pdf_text(path)
             except Exception as exc:
                 raise ResumeParseError(f"PDF parsing failed: {exc}") from exc
-        elif path.suffix.lower() in (".docx", ".doc"):
+        elif path.suffix.lower() == ".docx":
             try:
                 return extract_docx_text(path)
             except Exception as exc:
                 raise ResumeParseError(f"DOCX parsing failed: {exc}") from exc
         else:
             raise ResumeParseError(
-                f"Unsupported file type: {path.suffix}. Use PDF or DOCX."
+                f"Unsupported file type: {path.suffix}. Use PDF or DOCX (.doc files must be converted to .docx first)."
             )
     if fallback_text:
         return fallback_text

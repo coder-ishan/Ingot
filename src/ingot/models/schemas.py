@@ -7,7 +7,7 @@ All agents import their output_type from here. Nothing imports from agents.
 """
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class UserProfile(BaseModel):
@@ -46,13 +46,6 @@ class IntelBriefFull(BaseModel):
     talking_points: list[str] = Field(default_factory=list, min_length=1, max_length=3)
     company_product_description: str = ""
 
-    @field_validator("talking_points")
-    @classmethod
-    def at_least_one_talking_point(cls, v: list[str]) -> list[str]:
-        if not v:
-            raise ValueError("IntelBriefFull must have at least one talking point")
-        return v
-
 
 class MatchResult(BaseModel):
     """Matcher agent output."""
@@ -82,9 +75,8 @@ class EmailDraft(BaseModel):
 
     @field_validator("body")
     @classmethod
-    def body_must_mention_company(cls, v: str, info: object) -> str:
-        # Validated post-generation: body must reference something specific.
-        # This is a soft check — passes unless body is suspiciously short.
+    def body_must_be_sufficiently_long(cls, v: str, info: ValidationInfo) -> str:
+        # Length heuristic — fails only if body is suspiciously short (< 100 chars). Not a company-name check.
         if len(v) < 100:
             raise ValueError("Email body is too short to be personalized (< 100 chars)")
         return v

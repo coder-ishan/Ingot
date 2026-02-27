@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 import httpx
+import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -23,6 +24,8 @@ from ingot.venues.yc import fetch_yc_companies
 from ingot.scoring.scorer import ScoringWeights, score_lead, DEFAULT_WEIGHTS
 from ingot.agents.registry import register_agent
 
+log = structlog.get_logger()
+
 
 @dataclass
 class ScoutDeps:
@@ -30,7 +33,7 @@ class ScoutDeps:
     session: AsyncSession
     user_skills: list[str]                       # from UserProfile.skills
     resume_text: str = ""                        # for semantic scoring
-    weights: ScoringWeights = field(default_factory=lambda: DEFAULT_WEIGHTS)
+    weights: ScoringWeights = field(default_factory=ScoringWeights)
     batch: str | None = None                     # YC batch filter, None = recent batches
     max_leads: int = 20                          # CONTEXT.md: 10-20 leads per run
     min_leads: int = 10
@@ -52,15 +55,16 @@ def _validate_company_record(company: dict) -> tuple[bool, str]:
     return True, ""
 
 
-async def _is_duplicate(session: AsyncSession, person_email: str) -> bool:
+async def _is_duplicate(session: AsyncSession, company_website: str) -> bool:
     """
-    SCOUT-06: Case-insensitive email deduplication against existing Lead records.
-    Returns True if this email already exists in any status.
+    SCOUT-06: Case-insensitive company_website deduplication against existing Lead records.
+    Returns True if this company_website already exists in any status.
+    Note: person_email is not available at Scout stage; dedup is performed by company_website.
     """
-    if not person_email or person_email.strip() == "":
-        return False  # No email = can't dedup; allow through
+    if not company_website or company_website.strip() == "":
+        return False  # No website = can't dedup; allow through
     result = await session.execute(
-        select(Lead).where(Lead.person_email.ilike(person_email.strip()))
+        select(Lead).where(Lead.company_website.ilike(company_website.strip()))
     )
     return result.scalars().first() is not None
 
@@ -77,7 +81,7 @@ def _company_to_lead_dict(company: dict, score: float) -> dict:
         "status": LeadStatus.discovered,
         "initial_score": round(score, 4),
         "created_at": datetime.utcnow(),
-        # Store yc-oss metadata as a note for Research agent
+        # Internal scoring metadata — stripped before persistence; Research agent re-fetches context from IntelBrief
         "_yc_one_liner": company.get("one_liner", ""),
         "_yc_batch": company.get("batch", ""),
         "_yc_stage": company.get("stage", ""),
@@ -106,7 +110,8 @@ async def scout_run(deps: ScoutDeps) -> list[Lead]:
                 break
             await asyncio.sleep(0.5)  # SCOUT-05: request delay between fetches
         except Exception:
-            continue  # Try next batch
+            log.warning("yc_batch_fetch_failed", batch=batch, exc_info=True)
+            continue
 
     if not all_companies:
         # Ultimate fallback: all companies
@@ -147,9 +152,16 @@ async def scout_run(deps: ScoutDeps) -> list[Lead]:
         clean_data = {k: v for k, v in lead_data.items() if not k.startswith("_")}
         lead = Lead(**clean_data)
         deps.session.add(lead)
-        await deps.session.commit()
-        await deps.session.refresh(lead)
         persisted_leads.append(lead)
+
+    if persisted_leads:
+        try:
+            await deps.session.commit()
+            for lead in persisted_leads:
+                await deps.session.refresh(lead)
+        except Exception:
+            await deps.session.rollback()
+            raise
 
     return persisted_leads
 

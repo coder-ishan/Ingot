@@ -30,7 +30,7 @@ from __future__ import annotations
 import json
 import warnings
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 import questionary
 from pydantic import BaseModel
@@ -53,6 +53,7 @@ class WriterDeps:
     sender_name: str = ""        # From config — used in CAN-SPAM footer
     sender_email: str = ""       # From config — used in CAN-SPAM footer
     physical_address: str = ""   # From setup wizard config — REQUIRED for CAN-SPAM
+    resolved_recipient_type: str = "default"  # set by inject_writer_context; read by run_writer
 
 
 # ---------------------------------------------------------------------------
@@ -174,8 +175,10 @@ def create_writer_agent(model: str) -> Agent[WriterDeps, EmailDraft]:
         else:
             recipient_type = "default"
 
+        # Tone detection priority: HR > CTO > CEO > default
+        # (e.g. "VP Engineering & Talent Acquisition" matches "talent" → HR, which is correct)
         tone_guidance = _TONE_PROMPTS[recipient_type]
-        deps.lead.__dict__["_resolved_recipient_type"] = recipient_type  # stored for persistence
+        deps.resolved_recipient_type = recipient_type
 
         if not mcq.skipped and mcq.answers:
             mcq_section = "\nMCQ ANSWERS (user's personalization input):\n"
@@ -372,8 +375,8 @@ async def run_writer(
     )
     draft: EmailDraft = result.output
 
-    # Determine recipient type (was set in inject_writer_context)
-    recipient_type = lead.__dict__.get("_resolved_recipient_type", "default")
+    # Determine recipient type (set by inject_writer_context via deps.resolved_recipient_type)
+    recipient_type = deps.resolved_recipient_type
 
     # Persist Email record (WRITER-11, DB-05)
     email_record = Email(
@@ -384,11 +387,13 @@ async def run_writer(
         mcq_answers_json=json.dumps(deps.mcq_answers.answers),
         status=EmailStatus.drafted,
         lead_id=lead.id,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
     deps.session.add(email_record)
-    await deps.session.commit()
-    await deps.session.refresh(email_record)
+    # flush (not commit) to get the DB-assigned email_record.id while keeping
+    # Email + FollowUps + Lead status update in a single atomic transaction
+    await deps.session.flush()
+    assert email_record.id is not None, "DB failed to assign email.id after flush"
 
     # Persist Day 3 follow-up (WRITER-09, DB-06)
     followup_day3 = FollowUp(
@@ -396,7 +401,7 @@ async def run_writer(
         scheduled_for_day=3,
         body=draft.followup_day3,
         status=FollowUpStatus.queued,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
     # Persist Day 7 follow-up (WRITER-09, DB-06)
     followup_day7 = FollowUp(
@@ -404,7 +409,7 @@ async def run_writer(
         scheduled_for_day=7,
         body=draft.followup_day7,
         status=FollowUpStatus.queued,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
     deps.session.add(followup_day3)
     deps.session.add(followup_day7)
@@ -414,6 +419,7 @@ async def run_writer(
     deps.session.add(lead)
 
     await deps.session.commit()
+    await deps.session.refresh(email_record)
     return draft
 
 
