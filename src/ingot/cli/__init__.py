@@ -2,6 +2,7 @@
 import typer
 
 from ingot.cli.setup import setup_app
+from ingot.cli.dev import parse_resume_cmd
 
 # Use invoke_without_command=True so that the app always shows the Commands
 # section even with a single sub-command registered.
@@ -20,3 +21,4 @@ def main(ctx: typer.Context) -> None:
 
 
 app.command(name="setup", help="Run the INGOT setup wizard")(setup_app)
+app.command(name="parse-resume", help="Parse a resume PDF/DOCX and preview extracted text")(parse_resume_cmd)
