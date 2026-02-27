@@ -86,8 +86,6 @@ def extract_docx_text(path: str | Path) -> str:
     Uses iter_inner_content() rather than doc.paragraphs so that table rows
     are included in their correct position relative to surrounding paragraphs.
     """
-    from docx import Document  # python-docx
-
     doc = Document(str(path))
     parts: list[str] = []
     for item in doc.element.body.iter_inner_content():
@@ -250,7 +248,7 @@ async def extract_profile(
                         fallback).
         session:        Open AsyncSession for the current request.
         model_override: Optional Anthropic model string to override the
-                        default.  Wired in Plan 02-06 (Orchestrator).
+                        default.  # TODO(02-06): wire model_override when Orchestrator is implemented
 
     Returns:
         Persisted db_models.UserProfile row (with auto-assigned id).
@@ -270,7 +268,7 @@ async def extract_profile(
         raise ResumeParseError(f"Extraction rejected: {reason}")
 
     # Map Pydantic schema -> SQLModel table row
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     db_profile = db_models.UserProfile(
         name=profile_schema.name,
         headline=profile_schema.headline or "",

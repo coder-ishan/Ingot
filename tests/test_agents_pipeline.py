@@ -129,18 +129,18 @@ class TestResearchPipeline:
 # ─── WriterAgent ──────────────────────────────────────────────────────────────
 
 class TestWriterPipeline:
-    @pytest.fixture
-    def writer(self):
-        from ingot.agents.writer import WriterAgent
-        return WriterAgent()
+    """Tests for Phase 2 Writer: run_writer() async function with WriterDeps.
 
-    async def test_run_executes_all_steps(self, writer):
-        result = await writer.run(make_deps())
-        assert result.success
+    Writer uses factory pattern (create_writer_agent(model)) — no WriterAgent class.
+    """
 
-    async def test_run_step_invalid_raises_value_error(self, writer):
-        with pytest.raises(ValueError):
-            await writer.run_step("nonexistent", make_deps())
+    def test_run_writer_is_importable(self):
+        from ingot.agents.writer import run_writer, WriterDeps, create_writer_agent
+        import inspect
+        assert callable(run_writer)
+        assert WriterDeps is not None
+        assert callable(create_writer_agent)
+        assert inspect.iscoroutinefunction(run_writer)
 
 
 # ─── OutreachAgent ────────────────────────────────────────────────────────────
